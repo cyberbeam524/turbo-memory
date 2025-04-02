@@ -39,31 +39,56 @@ ray job submit --address http://localhost:8265 --working-dir . -- python my_scri
 ray attach ./example-full.yaml
 ```
 However, this is limitted to head node.
-Or manually:
+
+### Manual SSH setup
+To access any node from local computer, add keys manually:
 
 For this to work, we would need to create a keypair from AWS so that AWS has the public key and we can download the private key with .pem extension and place it in a local path such as ./local/rayscaler.pem.
 ![Alt text](img/createkeypair.jpg)
 
 ![Alt text](img/keypairtoggle.jpg)
+<img src="img/keypairtoggle.jpg" width="33%">
 
 The example-full.yaml file should have reference. So, add reference to the .pem file in example-full.yaml and the name of the keypair (e.g. "Rayscaler") to both head worker node config:
+<img src="img/sshprivatekeypath.jpg" width="33%">
 
-![Alt text](img/sshprivatekeypath.jpg)
-![Alt text](img/headnodeconfig.jpg)
-![Alt text](img/workernodeconfig.jpg)
+<img src="img/headnodeconfig.jpg" width="33%">
+
+<img src="img/workernodeconfig.jpg" width="33%">
 
 After using ```ray up ray up example-full.yaml```, you should see all nodes referencing keypair (e.g. "Rayscaler").
-![Alt text](img/keynameref.jpg)
+<img src="img/keynameref.jpg" width="33%">
 
 Now you can ssh into any node based on their public address given here on the ec2 info page:
 ![Alt text](img/sshpublicaddress.png)
 
 SSH into the Worker or Head Node
 ```
-ssh -i "./local/rayscaler.pem" ubuntu@e<publicaddress>
+ssh -i "./local/rayscaler.pem" ubuntu@<publicaddress>
 ```
 
+🐳 Docker Container Debugging
+
+🔍 Inspect Container Status
+```
+docker ps -a               # Is the container running?
+docker logs ray_container  # Any startup logs/errors?
+```
+
+📦 Start Ray Docker Container (GPU)
+```
+nohup docker run -d --gpus all --name ray_container rayproject/ray-ml:latest-gpu sleep infinity >> dockerc.log 2>&1 &
+```
+
+
 Since ray is running **within** containers named ray_container, we have to enter the containers before checking for ray status which indicates which nodes are already added to the cluster and the total GPU and CPU power of this cluster:
+
+👤 Enter the Running Container
+```
+docker exec -it ray_container bash
+```
+
+
 
 to submit a ray job, start dashboard on port 8265:
 ```
@@ -85,35 +110,16 @@ ray job stop <job_id> --address http://localhost:<dashboard-port>
 ray exec ./example-full.yaml 'tail -n 100 -f /tmp/ray/session_latest/logs/monitor*'
 ```
 
-🐳 Docker Container Debugging
-
-🔍 Inspect Container Status
-```
-docker ps -a               # Is the container running?
-docker logs ray_container  # Any startup logs/errors?
-```
-
-📦 Start Ray Docker Container (GPU)
-```
-nohup docker run -d --gpus all --name ray_container rayproject/ray-ml:latest-gpu sleep infinity >> dockerc.log 2>&1 &
-```
-
-👤 Enter the Running Container
-```
-docker exec -it ray_container bash
-```
-
 
 ⚙️ Ray Runtime Control
 
 When using 'rayproject/ray-ml:latest-gpu' image for containers, these commands are run within in the containers to start ray runtime on head and worker nodes respectively:
-![Alt text](img/containercommands.jpg)
-
+<img src="img/containercommands.jpg" width="70%">
 
 ## Running Ray without containers
 
 Ensure that both nodes are pingable from each other. In order for reachability between nodes, they need to be located in the same subnet and security group in same region as stated in example-full.yaml file:
-![Alt text](img/troubleshoot/sameregion.png)
+<img src="img/troubleshoot/sameregion.png" width="70%">
 
 SSH into the Worker node:
 ```
@@ -129,11 +135,11 @@ ping <headprivateaddress>
 ```
 
 You should see this:
-![Alt text](img/troubleshoot/lowlatency.jpg)
+<img src="img/troubleshoot/lowlatency.jpg" width="50%">
 This indicates **low latency** and good connection between the nodes with around 0.257ms to transmit packets.
 
 Example of higher latency(0.700ms to transmit packets) that will result in longer training time:
-![Alt text](img/troubleshoot/highlatency.png)
+<img src="img/troubleshoot/highlatency.png" width="50%">
 
 ▶️ Start Ray Head Node
 ```
@@ -153,13 +159,14 @@ ray start --address=172.31.1.20:6379 --object-manager-port=8076
 In order to distribute the data and training process to different gpus we can make use of Ray configuration objects like ScalingConfig, RunConfig, etc. By stating **workers = 3**, it triggers 3 worker nodes to be used with GPU used in all with **use_GPU = True**. 
 
 Script modification:
-![Alt text](img/training/scriptmodification.jpg)
+<img src="img/training/scriptmodification.jpg" width="70%">
+
 
 Initial logs of training will perform ping on each node to see if they are reachable from each other:
 ![Alt text](img/training/3nodesused.png)
 
 On dashboard, toggle to job page of job being run and find actors being used:
-![Alt text](img/3nodesactortable.jpg)
+![Alt text](img/training/3nodesactortable.jpg)
 
 Training Completed!🤩
-![Alt text](img/training/trainingcomplete.jpg)
+<img src="img/training/trainingcompleted.jpg" width="70%">
