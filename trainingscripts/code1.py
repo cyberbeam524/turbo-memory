@@ -84,7 +84,7 @@ from ray.train.torch import TorchTrainer, TorchConfig
 # [4] Build a Ray TorchTrainer to launch `train_func` on all workers
 # ==================================================================
 trainer = TorchTrainer(
-    train_func, scaling_config=ScalingConfig(num_workers=1, use_gpu=True
+    train_func, scaling_config=ScalingConfig(num_workers=3, use_gpu=True
     ),
     run_config=RunConfig(
                     name="my_run",

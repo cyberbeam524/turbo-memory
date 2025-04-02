@@ -195,6 +195,8 @@ opm3gaj0j4b50d.runpod.internal
 scp -i /Users/maaruni/runpod_ed -r -P 30203 ./code1.py opm3gaj0j4b50d-64410eb0@ssh.runpod.io:/
 
 export RAY_record_ref_creation_sites=1
+
+
 nohup python code1.py > run.log 2>&1 &
 
 tail -f run.log
@@ -375,3 +377,5 @@ ray start --address='18.138.228.31:6379'
 docker run -it --rm --net=host --name ray_container \
   --ulimit nofile=65536:65536 \
   rayproject/ray-ml:latest-gpu
+
+
