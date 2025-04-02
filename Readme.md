@@ -46,10 +46,10 @@ To access any node from local computer, add keys manually:
 For this to work, we would need to create a keypair from AWS so that AWS has the public key and we can download the private key with .pem extension and place it in a local path such as ./local/rayscaler.pem.
 ![Alt text](img/createkeypair.jpg)
 
-![Alt text](img/keypairtoggle.jpg)
 <img src="img/keypairtoggle.jpg" width="33%">
 
 The example-full.yaml file should have reference. So, add reference to the .pem file in example-full.yaml and the name of the keypair (e.g. "Rayscaler") to both head worker node config:
+
 <img src="img/sshprivatekeypath.jpg" width="33%">
 
 <img src="img/headnodeconfig.jpg" width="33%">
@@ -139,6 +139,7 @@ You should see this:
 This indicates **low latency** and good connection between the nodes with around 0.257ms to transmit packets.
 
 Example of higher latency(0.700ms to transmit packets) that will result in longer training time:
+
 <img src="img/troubleshoot/highlatency.png" width="50%">
 
 ▶️ Start Ray Head Node
@@ -159,6 +160,7 @@ ray start --address=172.31.1.20:6379 --object-manager-port=8076
 In order to distribute the data and training process to different gpus we can make use of Ray configuration objects like ScalingConfig, RunConfig, etc. By stating **workers = 3**, it triggers 3 worker nodes to be used with GPU used in all with **use_GPU = True**. 
 
 Script modification:
+
 <img src="img/training/scriptmodification.jpg" width="70%">
 
 
@@ -169,4 +171,5 @@ On dashboard, toggle to job page of job being run and find actors being used:
 ![Alt text](img/training/3nodesactortable.jpg)
 
 Training Completed!🤩
+
 <img src="img/training/trainingcompleted.jpg" width="70%">
