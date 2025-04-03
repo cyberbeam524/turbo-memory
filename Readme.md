@@ -1,6 +1,9 @@
-Ray AWS Cluster Setup & Commands
+# Ray AWS and Runpod Cluster Setup & Commands
 
-This guide provides step-by-step commands and tips to manage a Ray cluster on AWS using the Ray Autoscaler and Docker containers. This includes additonal debugging tips and understanding of how ray works under the hood on AWS by building on [Offical Ray AWS guide](https://docs.ray.io/en/latest/cluster/vms/user-guides/launching-clusters/aws.html)
+This guide provides step-by-step commands and tips to manage a Ray cluster on AWS or Runpod using the Ray Autoscaler and Docker containers. This includes additonal debugging tips and understanding of how ray works under the hood on AWS by building on [Offical Ray AWS guide](https://docs.ray.io/en/latest/cluster/vms/user-guides/launching-clusters/aws.html) and [Huggingfaceext classifier](https://docs.ray.io/en/latest/train/examples/transformers/transformers_torch_trainer_basic.html#transformers-torch-trainer-basic-example). Since runpod cluster setup is not offered out of the box by Ray, we can use on prem way of setting up Ray without containers. This allows us to understand the inner workings of how ray connects nodes manually to run scripts in a distributed manner.
+
+
+## AWS Cluster Setup with Containers
 
 🚀 Getting Started
 
@@ -97,7 +100,7 @@ ray dashboard ./example-full.yaml
 
 submit job via dashboard locally:
 ```
-ray job submit --address http://localhost:8265 --working-dir . -- python trainingscripts/code1.py
+ray job submit --address http://localhost:8265 --working-dir . -- python trainingscripts/huggingfaceclassfier.py
 ```
 
 to stop a ray job:
@@ -173,3 +176,125 @@ On dashboard, toggle to job page of job being run and find actors being used:
 Training Completed!🤩
 
 <img src="img/training/trainingcompleted.jpg" width="70%">
+
+
+
+# Runpod Manual Setup without containers
+
+This outlines the steps to set up a distributed Ray cluster with Hugging Face support on RunPod instances. It includes environment setup, network configuration, and useful commands.
+
+📦 Python and System Package Installation for each node
+
+Install necessary Python packages:
+```
+pip install ray transformers datasets evaluate ray[train] pandas ray[default] scikit-learn transformers[torch] 'accelerate>=0.26.0'
+```
+
+Install useful system utilities:
+```
+apt update && apt install -y lsof vim iputils-ping netcat redis-server
+```
+
+
+🌐 IP Setup and SSH (Per Node)
+
+Generate private and public key on local computer using this guide: https://git-scm.com/book/en/v2/Git-on-the-Server-Generating-Your-SSH-Public-Key. 
+
+Place public key in settings ssh tab:
+<img src="img/runpod/sshkey.png" width="70%">
+
+Head Node (example: 172.23.0.2)
+```
+ssh eysfrdqrjotk7g-64410e75@ssh.runpod.io -i <local_private_key_location>
+ip addr | grep inet
+
+```
+Worker Node 1
+```
+ssh mpmalwyl5c5yoi-64410e75@ssh.runpod.io -i <local_private_key_location>
+```
+Run this on all nodes to find interfaces and associated IP that can be used to connecting to headnode:
+```
+ip addr | grep inet
+```
+This should give these relevant global interfaces (i.e. eth0 or podnet1) and IPs
+<img src="img/runpod/findinginterfaces.png" width="70%">
+
+Perform a ping test from worker node to head IP as shown below for different interfaces. The below test shows podnet1 connection is faster:
+<img src="img/runpod/latencytestinterfaces.png" width="70%">
+
+
+📁 Environment Variables (All Pods)
+
+Set shared environment variables:
+```
+export MASTER_ADDR=172.22.0.2
+export MASTER_PORT=33
+export NCCL_SOCKET_IFNAME=eth0
+export NCCL_IB_DISABLE=1
+export NCCL_DEBUG=INFO
+export HF_HOME=/workspace/hf_cache
+export TRANSFORMERS_CACHE=/workspace/hf_cache
+export HF_DATASETS_CACHE=/workspace/hf_cache
+```
+
+Optional Hugging Face cache tricks:
+```
+rm -rf ~/.cache/huggingface
+ln -s /workspace/hf_cache ~/.cache/huggingface
+```
+
+Check environment variable settings:
+```
+echo "HF_HOME=$HF_HOME, TRANSFORMERS_CACHE=$TRANSFORMERS_CACHE, HF_DATASETS_CACHE=$HF_DATASETS_CACHE"
+echo "MASTER_ADDR=$MASTER_ADDR"
+echo "MASTER_PORT=$MASTER_PORT"
+echo "NCCL_SOCKET_IFNAME=$NCCL_SOCKET_IFNAME"
+```
+
+
+## Ray Cluster Setup
+
+### Step-by-Step Actions:
+
+| Step | Node        | Action                                                                                       |
+|------|-------------|----------------------------------------------------------------------------------------------|
+| 1    | Head Node   | `ray start --head --node-ip-address=<head_private_ip_address> --port=33 --include-dashboard=True --dashboard-host=0.0.0.0 --dashboard-port=8265` |
+| 2    | Worker Node | `ray start --address=<head_private_ip_address>:33`                                                          |
+| 3    | All Pods    | Set `MASTER_ADDR`, `MASTER_PORT`, `NCCL_SOCKET_IFNAME` as above                             |
+| 4    | Worker Node | Test connection: `nc -zv <head_private_ip_address> 33` or `nc -zv 4pimh07ke0o6a3.runpod.internal 33`        |
+
+---
+
+Check ray status:
+<img src="img/runpod/raystatus.png" width="70%">
+
+
+After starting ray, you should be able to see ray dashboard from head node:
+<img src="img/runpod/dashboardaccess.png" width="70%">
+
+
+🚀 Running Training Scripts
+
+Run any training script using:
+```
+nohup python huggingfaceclassfier.py > scriptlogs.log 2>&1 &
+```
+
+Find latest logs with:
+```
+tail -f scriptlogs.log
+```
+
+Sample starting logs showing nodes connecting well with each other:
+<img src="img/runpod/nodesused.png" width="70%">
+
+Sample logs showing nodes being unable to connect with each other - perform above ping tests to troubleshoot:
+<img src="img/runpod/noconnectivity.png" width="70%">
+
+Check on runpod dashboard for gpu usage when script is running:
+<img src="img/runpod/gpu_util_4.png" width="70%">
+
+
+Happy Distributed Training! 🚀
+

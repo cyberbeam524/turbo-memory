@@ -16,16 +16,6 @@ from ray.train.torch import TorchTrainer
 
 import os
 
-os.environ["NCCL_DEBUG"] = "INFO"
-os.environ["NCCL_SOCKET_IFNAME"] = "podnet1"  # use correct interface
-os.environ["NCCL_IB_DISABLE"] = "1"           # optional, safer on cloud
-
-os.environ["TORCH_DISTRIBUTED_DEBUG"] = "DETAIL"  # extra PyTorch logs
-
-# os.environ["MASTER_ADDR"] = "opm3gaj0j4b50d.runpod.internal"  # e.g., 172.21.0.2
-# os.environ["MASTER_PORT"] = "33"
-
-
 # [1] Define a training function that includes all your training logic
 # ====================================================================
 def train_func(config):
