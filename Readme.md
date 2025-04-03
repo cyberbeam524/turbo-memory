@@ -253,8 +253,6 @@ echo "NCCL_SOCKET_IFNAME=$NCCL_SOCKET_IFNAME"
 ```
 
 
-## Ray Cluster Setup
-
 ### Step-by-Step Actions:
 
 | Step | Node        | Action                                                                                       |
