@@ -207,7 +207,6 @@ Head Node (example: 172.23.0.2)
 ```
 ssh eysfrdqrjotk7g-64410e75@ssh.runpod.io -i <local_private_key_location>
 ip addr | grep inet
-
 ```
 Worker Node 1
 ```
@@ -221,6 +220,7 @@ This should give these relevant global interfaces (i.e. eth0 or podnet1) and IPs
 <img src="img/runpod/findinginterfaces.png" width="70%">
 
 Perform a ping test from worker node to head IP as shown below for different interfaces. The below test shows podnet1 connection is faster:
+
 <img src="img/runpod/latencytestinterfaces.png" width="70%">
 
 
@@ -267,11 +267,12 @@ echo "NCCL_SOCKET_IFNAME=$NCCL_SOCKET_IFNAME"
 ---
 
 Check ray status:
+
 <img src="img/runpod/raystatus.png" width="70%">
 
 
 After starting ray, you should be able to see ray dashboard from head node:
-<img src="img/runpod/dashboardaccess.png" width="70%">
+<img src="img/runpod/dashboardaccess.png" width="40%">
 
 
 🚀 Running Training Scripts
@@ -293,7 +294,7 @@ Sample logs showing nodes being unable to connect with each other - perform abov
 <img src="img/runpod/noconnectivity.png" width="70%">
 
 Check on runpod dashboard for gpu usage when script is running:
-<img src="img/runpod/gpu_util_4.png" width="70%">
+<img src="img/runpod/gpu_util_4.png" width="50%">
 
 
 Happy Distributed Training! 🚀
